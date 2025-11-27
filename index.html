@@ -1,37 +1,42 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>DOCX → Markdown</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; max-width: 680px; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1.2rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
-    input[type=file] { display:block; margin-bottom: 1rem; }
-    .flash { color: #b00; margin-bottom: 1rem; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Email Campaign</title>
+    <style>
+        /* Inline or simple CSS for email */
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+        h1, h2 {
+            color: #188838; /* example brand color */
+        }
+        a {
+            color: #188838;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-  <h1>DOCX → Markdown converter</h1>
-  <div class="card">
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="flash">
-          {% for msg in messages %}
-            <div>{{ msg }}</div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
+    <div class="container">
+        <h1>My Email Title</h1>
+        <p>Hello,</p>
+        <p>This is a sample email converted from a Word document and Markdown.</p>
+        <p>Here is some HTML content:</p>
+        <p><!-- Insert your Markdown → HTML content here --></p>
 
-    <form action="{{ url_for('convert') }}" method="post" enctype="multipart/form-data">
-      <label for="file">Choose a .docx file (max 10 MB):</label>
-      <input type="file" id="file" name="file" accept=".docx" required />
-      <button type="submit">Convert to Markdown</button>
-    </form>
-
-    <hr />
-    <p>Notes: This app uses <strong>Pandoc</strong> under the hood. If conversion fails, ensure Pandoc is installed and on your PATH.</p>
-  </div>
+        <p>Best regards,<br>Your Company</p>
+    </div>
 </body>
 </html>
