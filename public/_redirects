@@ -1,0 +1,6 @@
+/api/campaigns  /.netlify/functions/campaigns  200
+/api/campaigns/:id/summary  /.netlify/functions/campaigns-summary  200
+/api/campaigns/:id/clicks  /.netlify/functions/campaigns-clicks  200
+/api/campaigns/:id/bounces  /.netlify/functions/campaigns-bounces  200
+/api/lists/performance  /.netlify/functions/lists-performance  200
+/api/health  /.netlify/functions/health  200

@@ -1,0 +1,12 @@
+{
+  "name": "campaign-monitor-dashboard",
+  "version": "1.0.0",
+  "description": "Campaign Monitor Dashboard for Netlify",
+  "scripts": {
+    "build": "echo 'No build needed for static site'"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {}
+}

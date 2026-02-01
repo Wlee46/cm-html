@@ -1,0 +1,2208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Monitor Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .header h1 {
+            color: #1a202c;
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 15px;
+        }
+
+        .filters-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            color: #4a5568;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .selection-info {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .selection-info span {
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .selection-info .count {
+            background: #4299e1;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .campaign-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .campaign-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .campaign-item:last-child {
+            border-bottom: none;
+        }
+
+        .campaign-item:hover {
+            background: #f7fafc;
+        }
+
+        .campaign-item.selected {
+            background: #ebf8ff;
+            border-left: 3px solid #4299e1;
+        }
+
+        .campaign-checkbox {
+            width: 18px;
+            height: 18px;
+            margin-right: 15px;
+            cursor: pointer;
+            accent-color: #4299e1;
+        }
+
+        .campaign-info {
+            flex: 1;
+        }
+
+        .campaign-subject {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #2d3748;
+        }
+
+        .campaign-date {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .comparison-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            color: #1a202c;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        .legend-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .chart-container {
+            margin-top: 30px;
+        }
+
+        .campaign-row {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .campaign-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .campaign-row-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .campaign-title {
+            font-weight: 500;
+            color: #2d3748;
+            font-size: 15px;
+        }
+
+        .campaign-meta {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .bar-chart {
+            position: relative;
+            height: 40px;
+            background: #f7fafc;
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .bar-segment {
+            height: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .bar-segment.opened {
+            background: #48bb78;
+        }
+
+        .bar-segment.clicked {
+            background: #4299e1;
+        }
+
+        .bar-segment.ctor {
+            background: #9f7aea;
+        }
+
+        .bar-segment.bounced {
+            background: #f6ad55;
+        }
+
+        .bar-segment.unsubscribed {
+            background: #fc8181;
+        }
+
+        .bar-segment.complained {
+            background: #38b2ac;
+        }
+
+        .bar-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .percentage-scale {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 0 2px;
+        }
+
+        .percentage-label {
+            font-size: 12px;
+            color: #a0aec0;
+            font-weight: 500;
+        }
+
+        .stats-table {
+            margin-top: 40px;
+            overflow-x: auto;
+        }
+
+        .table-header {
+            color: #1a202c;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #f7fafc;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #2d3748;
+        }
+
+        tbody tr:hover {
+            background: #f7fafc;
+        }
+
+        .campaign-name-cell {
+            font-weight: 500;
+        }
+
+        .campaign-sent-info {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        .stat-value {
+            font-weight: 600;
+        }
+
+        .stat-percentage {
+            color: #718096;
+            font-size: 13px;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .preview-link {
+            color: #4299e1;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .preview-link:hover {
+            text-decoration: underline;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #3182ce;
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .error {
+            background: #fed7d7;
+            border: 1px solid #fc8181;
+            color: #742a2a;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .success {
+            background: #c6f6d5;
+            border: 1px solid #48bb78;
+            color: #22543d;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .action-buttons {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .campaign-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            position: relative;
+        }
+
+        .campaign-card h3 {
+            color: #1a202c;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-right: 40px;
+            line-height: 1.4;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #fc8181;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: #f56565;
+            transform: scale(1.1);
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .metric-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #718096;
+            font-size: 13px;
+        }
+
+        .metric-value {
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .preview-link-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .preview-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: #4299e1;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .preview-link-btn:hover {
+            background: #3182ce;
+        }
+
+        .preview-link-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .top-links-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .top-links-title {
+            color: #2d3748;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .link-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f7fafc;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .link-item:hover {
+            background: #edf2f7;
+        }
+
+        .link-rank {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #4299e1;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .link-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .link-url {
+            color: #4299e1;
+            font-weight: 500;
+            font-size: 12px;
+            text-decoration: none;
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-bottom: 3px;
+        }
+
+        .link-url:hover {
+            text-decoration: underline;
+        }
+
+        .link-clicks {
+            color: #718096;
+            font-size: 11px;
+        }
+
+        .sort-indicator {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 3px 10px;
+            background: #48bb78;
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .campaign-preview-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .preview-title {
+            color: #2d3748;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preview-frame {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            overflow: hidden;
+        }
+
+        .preview-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .preview-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .link-with-percentage {
+            position: relative;
+            display: inline-block;
+        }
+
+        .click-percentage-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 8px;
+            background: #4299e1;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+
+        .campaign-preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        .campaign-preview-modal.active {
+            display: block;
+        }
+
+        .preview-modal-content {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .preview-modal-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f7fafc;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .preview-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .preview-modal-close {
+            background: #e2e8f0;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .preview-modal-close:hover {
+            background: #cbd5e0;
+        }
+
+        .preview-modal-body {
+            padding: 30px;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+
+        .preview-content-wrapper {
+            background: white;
+        }
+
+        .click-data-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .click-data-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .click-data-summary {
+            display: flex;
+            gap: 20px;
+        }
+
+        .summary-stat {
+            text-align: center;
+        }
+
+        .summary-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4299e1;
+        }
+
+        .summary-stat-label {
+            font-size: 12px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .click-data-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .click-data-item {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #4299e1;
+            transition: all 0.2s;
+        }
+
+        .click-data-item:hover {
+            background: #edf2f7;
+            transform: translateX(5px);
+        }
+
+        .click-item-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .click-item-rank {
+            background: #4299e1;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .click-item-url-container {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .click-item-story-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .click-item-url {
+            color: #4299e1;
+            font-weight: 500;
+            font-size: 13px;
+            text-decoration: none;
+            word-break: break-all;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .click-item-url:hover {
+            text-decoration: underline;
+        }
+
+        .click-item-stats {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .click-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: white;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .click-stat-label {
+            color: #718096;
+        }
+
+        .click-stat-value {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .click-percentage-large {
+            background: #4299e1;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-left: auto;
+        }
+
+        .no-click-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a0aec0;
+        }
+
+        .no-click-data svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .view-original-banner {
+            background: #ebf8ff;
+            border: 1px solid #bee3f8;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .view-original-banner svg {
+            width: 20px;
+            height: 20px;
+            color: #4299e1;
+            flex-shrink: 0;
+        }
+
+        .view-original-banner-text {
+            flex: 1;
+            font-size: 14px;
+            color: #2c5282;
+        }
+
+        .view-original-link {
+            color: #4299e1;
+            text-decoration: none;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .view-original-link:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .view-with-clicks-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: #48bb78;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .view-with-clicks-btn:hover {
+            background: #38a169;
+        }
+
+        .view-with-clicks-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .toggle-stats-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: white;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .toggle-stats-btn:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+        .toggle-stats-btn svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+        }
+
+        .toggle-stats-btn.active svg {
+            transform: rotate(180deg);
+        }
+
+        .stats-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .legend {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            th, td {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+
+            .stats-table {
+                font-size: 12px;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Campaign Comparison Dashboard</h1>
+            <p>Select multiple campaigns and date ranges to compare performance</p>
+        </div>
+
+        <div id="error-container"></div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <h2 style="color: #1a202c; font-size: 18px; margin-bottom: 20px; font-weight: 600;">Filters & Selection</h2>
+            
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="dateFrom">From Date</label>
+                    <input type="date" id="dateFrom" onchange="filterCampaigns()">
+                </div>
+                <div class="filter-group">
+                    <label for="dateTo">To Date</label>
+                    <input type="date" id="dateTo" onchange="filterCampaigns()">
+                </div>
+                <div class="filter-group">
+                    <label for="sortBy">Sort By</label>
+                    <select id="sortBy" onchange="filterCampaigns()">
+                        <option value="date-desc">Date (Newest First)</option>
+                        <option value="date-asc">Date (Oldest First)</option>
+                        <option value="subject-asc">Subject (A-Z)</option>
+                        <option value="subject-desc">Subject (Z-A)</option>
+                    </select>
+                </div>
+            </div>
+
+            <input 
+                type="text" 
+                id="searchBox" 
+                class="search-box" 
+                placeholder="Search campaigns by subject..."
+                oninput="filterCampaigns()"
+            >
+
+            <div class="selection-info">
+                <span id="selectionText">Select campaigns to compare</span>
+                <span class="count" id="selectedCount">0 selected</span>
+            </div>
+
+            <div id="loading" class="loading hidden">Loading campaigns...</div>
+            
+            <div id="campaign-list" class="campaign-list">
+                <div class="loading">Loading campaigns...</div>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="compareSelected()" id="compareBtn" disabled>
+                    📊 Compare Selected Campaigns
+                </button>
+                <button class="btn btn-secondary" onclick="clearSelection()">
+                    Clear Selection
+                </button>
+                <button class="btn btn-secondary" onclick="shareSelection()" id="shareBtn" disabled>
+                    🔗 Share Selection
+                </button>
+            </div>
+        </div>
+
+        <!-- Comparison Results -->
+        <div id="comparison-section" class="hidden">
+            <!-- Sort Controls -->
+            <div style="background: white; border-radius: 12px; padding: 20px 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <h2 style="color: #1a202c; font-size: 20px; font-weight: 600; margin: 0;">Comparison Results</h2>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="resultSortBy" style="color: #4a5568; font-weight: 500; font-size: 14px;">Sort by:</label>
+                    <select id="resultSortBy" onchange="sortComparisonResults()" style="padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white; cursor: pointer;">
+                        <option value="clicks">Top Stories (by clicks)</option>
+                        <option value="date">Date (newest first)</option>
+                        <option value="open-rate">Open Rate</option>
+                        <option value="click-rate">Click Rate</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Individual Campaign Cards -->
+            <div id="campaign-cards" class="comparison-grid"></div>
+
+            <div class="comparison-section">
+                <div class="section-header">
+                    <h2 class="section-title">Campaign Performance Overview</h2>
+                    <div class="legend">
+                        <label class="legend-item">
+                            <input type="checkbox" checked onchange="toggleMetric('opened')">
+                            <span class="legend-color" style="background: #48bb78;"></span>
+                            <span>Opened</span>
+                        </label>
+                        <label class="legend-item">
+                            <input type="checkbox" checked onchange="toggleMetric('clicked')">
+                            <span class="legend-color" style="background: #4299e1;"></span>
+                            <span>Clicked</span>
+                        </label>
+                        <label class="legend-item">
+                            <input type="checkbox" onchange="toggleMetric('ctor')">
+                            <span class="legend-color" style="background: #9f7aea;"></span>
+                            <span>CTOR</span>
+                        </label>
+                        <label class="legend-item">
+                            <input type="checkbox" onchange="toggleMetric('bounced')">
+                            <span class="legend-color" style="background: #f6ad55;"></span>
+                            <span>Bounced</span>
+                        </label>
+                        <label class="legend-item">
+                            <input type="checkbox" onchange="toggleMetric('unsubscribed')">
+                            <span class="legend-color" style="background: #fc8181;"></span>
+                            <span>Unsubscribed</span>
+                        </label>
+                        <label class="legend-item">
+                            <input type="checkbox" onchange="toggleMetric('complained')">
+                            <span class="legend-color" style="background: #38b2ac;"></span>
+                            <span>Complained</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="percentage-scale">
+                    <span class="percentage-label">0%</span>
+                    <span class="percentage-label">7%</span>
+                    <span class="percentage-label">14%</span>
+                    <span class="percentage-label">21%</span>
+                    <span class="percentage-label">28%</span>
+                    <span class="percentage-label">35%</span>
+                    <span class="percentage-label">42%</span>
+                    <span class="percentage-label">49%</span>
+                    <span class="percentage-label">56%</span>
+                    <span class="percentage-label">63%</span>
+                    <span class="percentage-label">70%</span>
+                </div>
+
+                <div id="chart-container" class="chart-container"></div>
+            </div>
+
+            <!-- Collapsible Detailed Stats -->
+            <button class="toggle-stats-btn" onclick="toggleDetailedStats()" id="toggleStatsBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+                Show Detailed Performance Table
+            </button>
+
+            <div id="detailed-stats-section" class="stats-section hidden">
+                <div class="stats-table">
+                    <h3 class="table-header">Detailed Performance</h3>
+                    <table id="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Campaign</th>
+                                <th>Opened</th>
+                                <th>Clicked</th>
+                                <th>CTOR</th>
+                                <th>Bounced</th>
+                                <th>Unsubscribed</th>
+                                <th>Complained</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stats-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="downloadComparison()">📥 Download Report (PDF)</button>
+                <button class="btn btn-secondary" onclick="shareComparison()">🔗 Share This Comparison</button>
+                <button class="btn btn-primary" onclick="backToSelection()">← Back to Selection</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Preview Modal -->
+    <div id="campaign-preview-modal" class="campaign-preview-modal">
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <h3 class="preview-modal-title" id="preview-modal-title">Campaign Click Analysis</h3>
+                <button class="preview-modal-close" onclick="closeCampaignPreview()">×</button>
+            </div>
+            <div class="preview-modal-body">
+                <div id="preview-content-container" class="preview-content-wrapper"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allCampaigns = [];
+        let selectedCampaigns = new Set();
+        let comparisonData = [];
+        let visibleMetrics = {
+            opened: true,
+            clicked: true,
+            ctor: false,
+            bounced: false,
+            unsubscribed: false,
+            complained: false
+        };
+
+        window.addEventListener('load', () => {
+            loadURLParameters();
+            loadCampaigns();
+            if (!hasURLParameters()) {
+                setDefaultDates();
+            }
+        });
+
+        function hasURLParameters() {
+            const params = new URLSearchParams(window.location.search);
+            return params.has('campaigns') || params.has('dateFrom') || params.has('dateTo') || params.has('sortBy');
+        }
+
+        function loadURLParameters() {
+            const params = new URLSearchParams(window.location.search);
+            
+            // Load campaigns
+            const campaignsParam = params.get('campaigns');
+            if (campaignsParam) {
+                const campaignIds = campaignsParam.split(',');
+                selectedCampaigns = new Set(campaignIds);
+            }
+
+            // Load date filters
+            const dateFrom = params.get('dateFrom');
+            const dateTo = params.get('dateTo');
+            const sortBy = params.get('sortBy');
+            const search = params.get('search');
+
+            if (dateFrom) document.getElementById('dateFrom').value = dateFrom;
+            if (dateTo) document.getElementById('dateTo').value = dateTo;
+            if (sortBy) document.getElementById('sortBy').value = sortBy;
+            if (search) document.getElementById('searchBox').value = search;
+
+            // Auto-compare if campaigns are selected
+            if (campaignsParam && selectedCampaigns.size > 0) {
+                setTimeout(() => compareSelected(), 500);
+            }
+        }
+
+        function setDefaultDates() {
+            const today = new Date();
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(today.getMonth() - 6);
+            
+            document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+            document.getElementById('dateFrom').value = sixMonthsAgo.toISOString().split('T')[0];
+        }
+
+        async function loadCampaigns() {
+            document.getElementById('loading').classList.remove('hidden');
+            
+            try {
+                const response = await fetch('/api/campaigns');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load campaigns');
+                }
+
+                const data = await response.json();
+                allCampaigns = data.campaigns || [];
+                filterCampaigns();
+
+            } catch (error) {
+                showError('Error loading campaigns: ' + error.message);
+                document.getElementById('campaign-list').innerHTML = 
+                    '<p style="padding: 20px; text-align: center; color: #e53e3e;">Failed to load campaigns. Please refresh the page.</p>';
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function filterCampaigns() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            let filtered = allCampaigns.filter(campaign => {
+                const matchesSearch = (campaign.Subject || '').toLowerCase().includes(searchTerm);
+                
+                if (!campaign.SentDate) return matchesSearch;
+                
+                const sentDate = new Date(campaign.SentDate);
+                const matchesDateFrom = !dateFrom || sentDate >= new Date(dateFrom);
+                const matchesDateTo = !dateTo || sentDate <= new Date(dateTo + 'T23:59:59');
+                
+                return matchesSearch && matchesDateFrom && matchesDateTo;
+            });
+
+            filtered.sort((a, b) => {
+                if (sortBy === 'date-desc') {
+                    return new Date(b.SentDate || 0) - new Date(a.SentDate || 0);
+                } else if (sortBy === 'date-asc') {
+                    return new Date(a.SentDate || 0) - new Date(b.SentDate || 0);
+                } else if (sortBy === 'subject-asc') {
+                    return (a.Subject || '').localeCompare(b.Subject || '');
+                } else if (sortBy === 'subject-desc') {
+                    return (b.Subject || '').localeCompare(a.Subject || '');
+                }
+                return 0;
+            });
+
+            displayCampaigns(filtered);
+        }
+
+        function displayCampaigns(campaigns) {
+            const listContainer = document.getElementById('campaign-list');
+            listContainer.innerHTML = '';
+
+            if (!campaigns || campaigns.length === 0) {
+                listContainer.innerHTML = '<p style="padding: 20px; text-align: center; color: #718096;">No campaigns found</p>';
+                return;
+            }
+
+            campaigns.forEach(campaign => {
+                const item = document.createElement('div');
+                item.className = 'campaign-item';
+                if (selectedCampaigns.has(campaign.CampaignID)) {
+                    item.classList.add('selected');
+                }
+                
+                const sentDate = campaign.SentDate ? new Date(campaign.SentDate).toLocaleDateString() : 'Draft';
+                const isChecked = selectedCampaigns.has(campaign.CampaignID);
+                
+                item.innerHTML = `
+                    <input type="checkbox" class="campaign-checkbox" ${isChecked ? 'checked' : ''} 
+                           onclick="toggleCampaign('${campaign.CampaignID}', event)">
+                    <div class="campaign-info">
+                        <div class="campaign-subject">${campaign.Subject || 'Untitled Campaign'}</div>
+                        <div class="campaign-date">Sent: ${sentDate}</div>
+                    </div>
+                `;
+                
+                item.onclick = (e) => {
+                    if (e.target.type !== 'checkbox') {
+                        toggleCampaign(campaign.CampaignID, e);
+                    }
+                };
+                
+                listContainer.appendChild(item);
+            });
+
+            updateSelectionUI();
+        }
+
+        function toggleCampaign(campaignId, event) {
+            if (event.target.type === 'checkbox') {
+                event.stopPropagation();
+            }
+            
+            if (selectedCampaigns.has(campaignId)) {
+                selectedCampaigns.delete(campaignId);
+            } else {
+                selectedCampaigns.add(campaignId);
+            }
+            
+            filterCampaigns();
+        }
+
+        function clearSelection() {
+            selectedCampaigns.clear();
+            filterCampaigns();
+        }
+
+        function updateSelectionUI() {
+            const count = selectedCampaigns.size;
+            document.getElementById('selectedCount').textContent = `${count} selected`;
+            document.getElementById('compareBtn').disabled = count < 1;
+            document.getElementById('shareBtn').disabled = count < 1;
+            
+            if (count === 0) {
+                document.getElementById('selectionText').textContent = 'Select campaigns to compare';
+            } else if (count === 1) {
+                document.getElementById('selectionText').textContent = '1 campaign selected';
+            } else {
+                document.getElementById('selectionText').textContent = `${count} campaigns selected`;
+            }
+        }
+
+        function shareSelection() {
+            const url = generateShareURL();
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(url).then(() => {
+                showSuccess('Share link copied to clipboard! 📋');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showSuccess('Share link copied to clipboard! 📋');
+                } catch (err) {
+                    showError('Could not copy link. URL: ' + url);
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        function shareComparison() {
+            shareSelection();
+        }
+
+        function generateShareURL() {
+            const params = new URLSearchParams();
+            
+            // Add selected campaigns
+            if (selectedCampaigns.size > 0) {
+                params.set('campaigns', Array.from(selectedCampaigns).join(','));
+            }
+            
+            // Add date filters
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const sortBy = document.getElementById('sortBy').value;
+            const search = document.getElementById('searchBox').value;
+            
+            if (dateFrom) params.set('dateFrom', dateFrom);
+            if (dateTo) params.set('dateTo', dateTo);
+            if (sortBy && sortBy !== 'date-desc') params.set('sortBy', sortBy);
+            if (search) params.set('search', search);
+            
+            // Build URL
+            const baseURL = window.location.origin + window.location.pathname;
+            return baseURL + '?' + params.toString();
+        }
+
+        async function compareSelected() {
+            if (selectedCampaigns.size === 0) return;
+
+            document.getElementById('loading').classList.remove('hidden');
+            comparisonData = [];
+
+            try {
+                for (const campaignId of selectedCampaigns) {
+                    const summaryResponse = await fetch(`/api/campaigns/${campaignId}/summary`);
+                    if (!summaryResponse.ok) {
+                        throw new Error(`Failed to load campaign ${campaignId}`);
+                    }
+                    const summaryData = await summaryResponse.json();
+
+                    // Fetch clicks data
+                    const clicksResponse = await fetch(`/api/campaigns/${campaignId}/clicks`);
+                    let clicksData = [];
+                    if (clicksResponse.ok) {
+                        const clicksJson = await clicksResponse.json();
+                        clicksData = clicksJson.Results || clicksJson || [];
+                    }
+
+                    const campaign = allCampaigns.find(c => c.CampaignID === campaignId);
+                    
+                    comparisonData.push({
+                        ...summaryData,
+                        CampaignID: campaignId,
+                        Subject: campaign?.Subject || summaryData.Subject || 'Untitled Campaign',
+                        SentDate: campaign?.SentDate || summaryData.SentDate,
+                        ClicksData: clicksData,
+                        WebVersionURL: summaryData.WebVersionURL,
+                        WebVersionTextURL: summaryData.WebVersionTextURL
+                    });
+                }
+
+                displayComparison();
+
+            } catch (error) {
+                showError('Error loading campaign data: ' + error.message);
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function displayComparison() {
+            document.getElementById('comparison-section').classList.remove('hidden');
+            document.querySelector('.filters-section').classList.add('hidden');
+            
+            // Reset sort to default
+            document.getElementById('resultSortBy').value = 'clicks';
+            
+            renderComparisonCards();
+            renderCharts();
+            renderTable();
+
+            document.getElementById('comparison-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function sortComparisonResults() {
+            renderComparisonCards();
+        }
+
+        function renderComparisonCards() {
+            const cardsContainer = document.getElementById('campaign-cards');
+            cardsContainer.innerHTML = '';
+
+            const sortBy = document.getElementById('resultSortBy').value;
+            let sortedData = [...comparisonData];
+
+            // Sort based on selected option
+            switch(sortBy) {
+                case 'clicks':
+                    sortedData.sort((a, b) => (b.Clicks || 0) - (a.Clicks || 0));
+                    break;
+                case 'date':
+                    sortedData.sort((a, b) => new Date(b.SentDate || 0) - new Date(a.SentDate || 0));
+                    break;
+                case 'open-rate':
+                    sortedData.sort((a, b) => {
+                        const rateA = (a.Recipients || 0) > 0 ? (a.UniqueOpened || 0) / a.Recipients : 0;
+                        const rateB = (b.Recipients || 0) > 0 ? (b.UniqueOpened || 0) / b.Recipients : 0;
+                        return rateB - rateA;
+                    });
+                    break;
+                case 'click-rate':
+                    sortedData.sort((a, b) => {
+                        const rateA = (a.Recipients || 0) > 0 ? (a.Clicks || 0) / a.Recipients : 0;
+                        const rateB = (b.Recipients || 0) > 0 ? (b.Clicks || 0) / b.Recipients : 0;
+                        return rateB - rateA;
+                    });
+                    break;
+            }
+
+            sortedData.forEach((data, index) => {
+                const card = createCampaignCard(data, index, sortBy);
+                cardsContainer.appendChild(card);
+            });
+        }
+
+        function createCampaignCard(data, index, sortBy = 'clicks') {
+            const card = document.createElement('div');
+            card.className = 'campaign-card';
+
+            const recipients = data.Recipients || 0;
+            const uniqueOpens = data.UniqueOpened || 0;
+            const clicks = data.Clicks || 0;
+            const bounced = data.Bounced || 0;
+
+            const openRate = recipients > 0 ? ((uniqueOpens / recipients) * 100).toFixed(2) : 0;
+            const clickRate = recipients > 0 ? ((clicks / recipients) * 100).toFixed(2) : 0;
+            const bounceRate = recipients > 0 ? ((bounced / recipients) * 100).toFixed(2) : 0;
+
+            const campaignTitle = data.Subject || 'Untitled Campaign';
+            const sentDate = data.SentDate ? new Date(data.SentDate).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric', 
+                year: 'numeric'
+            }) : 'Draft';
+
+            const rankIndicator = index === 0 ? `<span class="sort-indicator">🏆 Top</span>` : '';
+
+            // Preview link section with enhanced display
+            const previewLinkHTML = data.WebVersionURL ? `
+                <div class="preview-link-section">
+                    <a href="${data.WebVersionURL}" target="_blank" class="preview-link-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                        View Original
+                    </a>
+                    <button class="view-with-clicks-btn" onclick="showCampaignPreviewWithClicks('${data.CampaignID}', '${escapeHtml(data.Subject)}', '${data.WebVersionURL}', event)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 16v-4"></path>
+                            <path d="M12 8h.01"></path>
+                        </svg>
+                        View with Click Data
+                    </button>
+                </div>
+            ` : '';
+
+            // Process top links with click percentages
+            const topLinks = getTopLinks(data.ClicksData || []);
+            const totalClicks = topLinks.reduce((sum, link) => sum + link.clicks, 0);
+            const totalUniqueClicks = recipients > 0 ? uniqueOpens : 1; // Use unique opens as base for percentage
+            
+            const topLinksHTML = topLinks.length > 0 ? 
+                topLinks.map((link, i) => {
+                    const percentage = totalClicks > 0 ? ((link.clicks / totalClicks) * 100).toFixed(1) : 0;
+                    const clickRate = uniqueOpens > 0 ? ((link.clicks / uniqueOpens) * 100).toFixed(2) : 0;
+                    const storyTitle = extractStoryTitle(link.url);
+                    return `
+                        <div class="link-item">
+                            <div class="link-rank">${i + 1}</div>
+                            <div class="link-info">
+                                <div style="font-weight: 500; color: #2d3748; font-size: 13px; margin-bottom: 4px;">${storyTitle}</div>
+                                <a href="${link.url}" target="_blank" class="link-url" title="${link.url}">
+                                    ${truncateUrl(link.url, 50)}
+                                </a>
+                                <div class="link-clicks">${link.clicks} click${link.clicks !== 1 ? 's' : ''} (${percentage}% of total clicks) <span class="click-percentage-badge">${clickRate}%</span></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('') :
+                '<div style="color: #a0aec0; font-size: 12px; text-align: center; padding: 10px;">No click data available</div>';
+
+            card.innerHTML = `
+                <button class="remove-btn" onclick="removeCampaign('${data.CampaignID}')">×</button>
+                <h3>${campaignTitle} ${rankIndicator}</h3>
+                <div style="color: #718096; font-size: 12px; margin-bottom: 15px;">${sentDate}</div>
+                <div class="metric-row">
+                    <span class="metric-label">Recipients</span>
+                    <span class="metric-value">${recipients.toLocaleString()}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Unique Opens</span>
+                    <span class="metric-value">${uniqueOpens.toLocaleString()} (${openRate}%)</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Clicks</span>
+                    <span class="metric-value">${clicks.toLocaleString()} (${clickRate}%)</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Bounced</span>
+                    <span class="metric-value">${bounced.toLocaleString()} (${bounceRate}%)</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Unsubscribed</span>
+                    <span class="metric-value">${(data.Unsubscribed || 0).toLocaleString()}</span>
+                </div>
+                ${previewLinkHTML}
+                <div class="top-links-section">
+                    <div class="top-links-title">🔗 Top Articles clicked</div>
+                    ${topLinksHTML}
+                </div>
+            `;
+
+            return card;
+        }
+
+        function truncateUrl(url, maxLength) {
+            if (url.length <= maxLength) return url;
+            
+            // Try to show domain and path intelligently
+            try {
+                const urlObj = new URL(url);
+                const domain = urlObj.hostname;
+                const path = urlObj.pathname + urlObj.search;
+                
+                if (domain.length + path.length <= maxLength) {
+                    return url;
+                }
+                
+                const availableLength = maxLength - domain.length - 5; // 5 for "..." and spacing
+                if (availableLength > 10) {
+                    return domain + path.substring(0, availableLength) + '...';
+                }
+            } catch (e) {
+                // If URL parsing fails, just truncate
+            }
+            
+            return url.substring(0, maxLength - 3) + '...';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function extractStoryTitle(url) {
+            try {
+                const urlObj = new URL(url);
+                let path = urlObj.pathname;
+                
+                // Remove leading/trailing slashes
+                path = path.replace(/^\/+|\/+$/g, '');
+                
+                // Get the last meaningful part of the path
+                const parts = path.split('/').filter(p => p.length > 0);
+                let title = parts[parts.length - 1] || urlObj.hostname;
+                
+                // Remove file extensions
+                title = title.replace(/\.(html|php|aspx|jsp)$/i, '');
+                
+                // Replace hyphens and underscores with spaces
+                title = title.replace(/[-_]/g, ' ');
+                
+                // Capitalize first letter of each word
+                title = title.split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                    .join(' ');
+                
+                // Limit length
+                if (title.length > 50) {
+                    title = title.substring(0, 47) + '...';
+                }
+                
+                return title || 'Untitled Link';
+            } catch (e) {
+                return 'Untitled Link';
+            }
+        }
+
+        async function showCampaignPreviewWithClicks(campaignId, subject, webVersionUrl, event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Show modal
+            const modal = document.getElementById('campaign-preview-modal');
+            const titleEl = document.getElementById('preview-modal-title');
+            const contentEl = document.getElementById('preview-content-container');
+
+            titleEl.textContent = `${subject || 'Campaign'} - Click Analysis`;
+            modal.classList.add('active');
+
+            // Get click data for this campaign
+            const campaignData = comparisonData.find(c => c.CampaignID === campaignId);
+            const clicksData = campaignData?.ClicksData || [];
+            const uniqueOpens = campaignData?.UniqueOpened || 0;
+            const totalRecipients = campaignData?.Recipients || 0;
+
+            // Calculate click stats
+            const linkClickCounts = {};
+            clicksData.forEach(click => {
+                const url = click.URL || click.url;
+                if (url) {
+                    linkClickCounts[url] = (linkClickCounts[url] || 0) + 1;
+                }
+            });
+
+            const totalClicks = Object.values(linkClickCounts).reduce((sum, count) => sum + count, 0);
+            const uniqueLinks = Object.keys(linkClickCounts).length;
+
+            // Sort links by click count
+            const sortedLinks = Object.entries(linkClickCounts)
+                .map(([url, clicks]) => ({
+                    url,
+                    clicks,
+                    percentage: uniqueOpens > 0 ? ((clicks / uniqueOpens) * 100).toFixed(2) : '0.00',
+                    shareOfClicks: totalClicks > 0 ? ((clicks / totalClicks) * 100).toFixed(1) : '0.0'
+                }))
+                .sort((a, b) => b.clicks - a.clicks);
+
+            // Build HTML
+            let html = `
+                <div class="view-original-banner">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                    <span class="view-original-banner-text">
+                        Want to see the actual campaign design?
+                    </span>
+                    <a href="${webVersionUrl}" target="_blank" class="view-original-link">
+                        View Original Campaign →
+                    </a>
+                </div>
+
+                <div class="click-data-header">
+                    <div class="click-data-title">Link Performance</div>
+                    <div class="click-data-summary">
+                        <div class="summary-stat">
+                            <div class="summary-stat-value">${totalClicks.toLocaleString()}</div>
+                            <div class="summary-stat-label">Total Clicks</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-stat-value">${uniqueLinks}</div>
+                            <div class="summary-stat-label">Unique Links</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-stat-value">${uniqueOpens.toLocaleString()}</div>
+                            <div class="summary-stat-label">Unique Opens</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (sortedLinks.length === 0) {
+                html += `
+                    <div class="no-click-data">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <h3 style="color: #4a5568; margin-bottom: 10px;">No Click Data Available</h3>
+                        <p style="color: #a0aec0;">This campaign hasn't received any clicks yet.</p>
+                    </div>
+                `;
+            } else {
+                html += '<div class="click-data-list">';
+                
+                sortedLinks.forEach((link, index) => {
+                    const storyTitle = extractStoryTitle(link.url);
+                    html += `
+                        <div class="click-data-item">
+                            <div class="click-item-header">
+                                <div class="click-item-rank">${index + 1}</div>
+                                <div class="click-item-url-container">
+                                    <div class="click-item-story-title">${storyTitle}</div>
+                                    <a href="${link.url}" target="_blank" class="click-item-url" title="${link.url}">
+                                        ${link.url}
+                                    </a>
+                                    <div class="click-item-stats">
+                                        <div class="click-stat">
+                                            <span class="click-stat-label">Clicks:</span>
+                                            <span class="click-stat-value">${link.clicks.toLocaleString()}</span>
+                                        </div>
+                                        <div class="click-stat">
+                                            <span class="click-stat-label">Share of total:</span>
+                                            <span class="click-stat-value">${link.shareOfClicks}%</span>
+                                        </div>
+                                        <div class="click-percentage-large">${link.percentage}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            }
+
+            contentEl.innerHTML = html;
+        }
+
+        function closeCampaignPreview() {
+            const modal = document.getElementById('campaign-preview-modal');
+            modal.classList.remove('active');
+        }
+
+        // Close modal on background click
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('campaign-preview-modal');
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeCampaignPreview();
+                }
+            });
+        });
+
+        function getTopLinks(clicksData) {
+            if (!clicksData || clicksData.length === 0) return [];
+
+            const linkCounts = {};
+            clicksData.forEach(click => {
+                const url = click.URL || click.url;
+                if (url) {
+                    linkCounts[url] = (linkCounts[url] || 0) + 1;
+                }
+            });
+
+            const sortedLinks = Object.entries(linkCounts)
+                .map(([url, clicks]) => ({ url, clicks }))
+                .sort((a, b) => b.clicks - a.clicks)
+                .slice(0, 5);
+
+            return sortedLinks;
+        }
+
+        function removeCampaign(campaignId) {
+            selectedCampaigns.delete(campaignId);
+            comparisonData = comparisonData.filter(c => c.CampaignID !== campaignId);
+            
+            if (comparisonData.length === 0) {
+                backToSelection();
+            } else {
+                renderComparisonCards();
+                renderCharts();
+                renderTable();
+            }
+        }
+
+        function toggleDetailedStats() {
+            const section = document.getElementById('detailed-stats-section');
+            const btn = document.getElementById('toggleStatsBtn');
+            const isHidden = section.classList.contains('hidden');
+            
+            if (isHidden) {
+                section.classList.remove('hidden');
+                btn.classList.add('active');
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                    Hide Detailed Performance Table
+                `;
+            } else {
+                section.classList.add('hidden');
+                btn.classList.remove('active');
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                    Show Detailed Performance Table
+                `;
+            }
+        }
+
+        function renderCharts() {
+            const container = document.getElementById('chart-container');
+            container.innerHTML = '';
+
+            comparisonData.forEach(data => {
+                const recipients = data.Recipients || 0;
+                const opened = data.UniqueOpened || 0;
+                const clicked = data.Clicks || 0;
+                const bounced = data.Bounced || 0;
+                const unsubscribed = data.Unsubscribed || 0;
+                const complained = data.Complained || 0;
+
+                const openRate = recipients > 0 ? (opened / recipients) * 100 : 0;
+                const clickRate = recipients > 0 ? (clicked / recipients) * 100 : 0;
+                const ctorRate = opened > 0 ? (clicked / opened) * 100 : 0;
+                const bounceRate = recipients > 0 ? (bounced / recipients) * 100 : 0;
+                const unsubRate = recipients > 0 ? (unsubscribed / recipients) * 100 : 0;
+                const complainRate = recipients > 0 ? (complained / recipients) * 100 : 0;
+
+                const sentDate = data.SentDate ? new Date(data.SentDate).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                }) : 'Draft';
+
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'campaign-row';
+                
+                rowDiv.innerHTML = `
+                    <div class="campaign-row-header">
+                        <div class="campaign-title">${data.Subject || 'Untitled Campaign'}</div>
+                        <div class="campaign-meta">Sent on ${sentDate} to ${recipients.toLocaleString()} recipients</div>
+                    </div>
+                    <div class="bar-chart">
+                        ${visibleMetrics.opened ? `
+                            <div class="bar-segment opened" style="width: ${openRate}%">
+                                ${openRate >= 5 ? `<span class="bar-label">${openRate.toFixed(1)}%</span>` : ''}
+                            </div>
+                        ` : ''}
+                        ${visibleMetrics.clicked ? `
+                            <div class="bar-segment clicked" style="width: ${clickRate}%">
+                                ${clickRate >= 5 ? `<span class="bar-label">${clickRate.toFixed(1)}%</span>` : ''}
+                            </div>
+                        ` : ''}
+                        ${visibleMetrics.ctor ? `
+                            <div class="bar-segment ctor" style="width: ${ctorRate}%">
+                                ${ctorRate >= 5 ? `<span class="bar-label">${ctorRate.toFixed(1)}%</span>` : ''}
+                            </div>
+                        ` : ''}
+                        ${visibleMetrics.bounced ? `
+                            <div class="bar-segment bounced" style="width: ${bounceRate}%">
+                                ${bounceRate >= 5 ? `<span class="bar-label">${bounceRate.toFixed(1)}%</span>` : ''}
+                            </div>
+                        ` : ''}
+                        ${visibleMetrics.unsubscribed ? `
+                            <div class="bar-segment unsubscribed" style="width: ${unsubRate}%">
+                                ${unsubRate >= 5 ? `<span class="bar-label">${unsubRate.toFixed(1)}%</span>` : ''}
+                            </div>
+                        ` : ''}
+                        ${visibleMetrics.complained ? `
+                            <div class="bar-segment complained" style="width: ${complainRate}%">
+                                ${complainRate >= 5 ? `<span class="bar-label">${complainRate.toFixed(1)}%</span>` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                container.appendChild(rowDiv);
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('stats-tbody');
+            tbody.innerHTML = '';
+
+            comparisonData.forEach(data => {
+                const recipients = data.Recipients || 0;
+                const opened = data.UniqueOpened || 0;
+                const clicked = data.Clicks || 0;
+                const bounced = data.Bounced || 0;
+                const unsubscribed = data.Unsubscribed || 0;
+                const complained = data.Complained || 0;
+
+                const openRate = recipients > 0 ? ((opened / recipients) * 100).toFixed(2) : '0.00';
+                const clickRate = recipients > 0 ? ((clicked / recipients) * 100).toFixed(2) : '0.00';
+                const ctorRate = opened > 0 ? ((clicked / opened) * 100).toFixed(2) : '0.00';
+                const bounceRate = recipients > 0 ? ((bounced / recipients) * 100).toFixed(2) : '0.00';
+                const unsubRate = recipients > 0 ? ((unsubscribed / recipients) * 100).toFixed(2) : '0.00';
+                const complainRate = recipients > 0 ? ((complained / recipients) * 100).toFixed(2) : '0.00';
+
+                const sentDate = data.SentDate ? new Date(data.SentDate).toLocaleDateString('en-US', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                }) : 'Draft';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="campaign-name-cell">${data.Subject || 'Untitled Campaign'}</div>
+                        <div class="campaign-sent-info">Sent on ${sentDate} to ${recipients.toLocaleString()} recipients</div>
+                    </td>
+                    <td>
+                        <span class="stat-value">${openRate}%</span>
+                        <span class="stat-percentage">${opened.toLocaleString()}</span>
+                    </td>
+                    <td>
+                        <span class="stat-value">${clickRate}%</span>
+                        <span class="stat-percentage">${clicked.toLocaleString()}</span>
+                    </td>
+                    <td>
+                        <span class="stat-value">${ctorRate}%</span>
+                        <span class="stat-percentage">${clicked.toLocaleString()}</span>
+                    </td>
+                    <td>
+                        <span class="stat-value">${bounceRate}%</span>
+                        <span class="stat-percentage">${bounced.toLocaleString()}</span>
+                    </td>
+                    <td>
+                        <span class="stat-value">${unsubRate}%</span>
+                        <span class="stat-percentage">${unsubscribed.toLocaleString()}</span>
+                    </td>
+                    <td>
+                        <span class="stat-value">${complainRate}%</span>
+                        <span class="stat-percentage">${complained.toLocaleString()}</span>
+                    </td>
+                    <td>
+                        ${data.WebVersionURL ? `<a href="${data.WebVersionURL}" target="_blank" class="preview-link">View →</a>` : '—'}
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function toggleMetric(metric) {
+            visibleMetrics[metric] = !visibleMetrics[metric];
+            renderCharts();
+        }
+
+        function backToSelection() {
+            document.getElementById('comparison-section').classList.add('hidden');
+            document.querySelector('.filters-section').classList.remove('hidden');
+            
+            // Reset stats section
+            const statsSection = document.getElementById('detailed-stats-section');
+            const btn = document.getElementById('toggleStatsBtn');
+            statsSection.classList.add('hidden');
+            btn.classList.remove('active');
+            btn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+                Show Detailed Performance Table
+            `;
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showError(message) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = `<div class="error">❌ ${message}</div>`;
+            setTimeout(() => {
+                errorContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = `<div class="success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                ${message}
+            </div>`;
+            setTimeout(() => {
+                errorContainer.innerHTML = '';
+            }, 3000);
+        }
+
+        function downloadComparison() {
+            if (comparisonData.length === 0) {
+                showError('No data to download');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(18);
+            doc.text('Campaign Comparison Report', 20, 20);
+
+            doc.setFontSize(11);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 28);
+            doc.text(`Campaigns Compared: ${comparisonData.length}`, 20, 34);
+
+            let yPos = 45;
+
+            comparisonData.forEach((data, index) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.setFontSize(13);
+                doc.text(`${index + 1}. ${data.Subject || 'Untitled'}`, 20, yPos);
+                yPos += 7;
+
+                doc.setFontSize(10);
+                const recipients = data.Recipients || 0;
+                const metrics = [
+                    ['Recipients', recipients],
+                    ['Opened', `${data.UniqueOpened || 0} (${recipients > 0 ? ((data.UniqueOpened / recipients) * 100).toFixed(2) : '0.00'}%)`],
+                    ['Clicked', `${data.Clicks || 0} (${recipients > 0 ? ((data.Clicks / recipients) * 100).toFixed(2) : '0.00'}%)`],
+                    ['Bounced', `${data.Bounced || 0} (${recipients > 0 ? ((data.Bounced / recipients) * 100).toFixed(2) : '0.00'}%)`],
+                    ['Unsubscribed', `${data.Unsubscribed || 0}`],
+                    ['Complained', `${data.Complained || 0}`]
+                ];
+
+                metrics.forEach(([label, value]) => {
+                    doc.text(`  ${label}: ${typeof value === 'number' ? value.toLocaleString() : value}`, 25, yPos);
+                    yPos += 5;
+                });
+
+                yPos += 5;
+            });
+
+            doc.save('campaign_comparison.pdf');
+        }
+    </script>
+</body>
+</html>
